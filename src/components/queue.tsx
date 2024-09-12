@@ -1,4 +1,4 @@
-import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { SortableContext, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -8,7 +8,8 @@ import { sampleColors } from "@/lib/constants";
 import { Dropzone } from "./dropzone";
 import { GripVerticalIcon, XCircleIcon } from "lucide-react";
 import type { Sample } from "./sample";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
 
 export interface Job {
   id: number;
@@ -20,11 +21,13 @@ export interface Job {
 function QueueItem({
   job,
   sample,
+  isActive,
   onRemove,
   onCancel,
 }: {
   job: Job;
   sample: Sample;
+  isActive: boolean;
   onRemove: () => void;
   onCancel: () => void;
 }) {
@@ -45,7 +48,10 @@ function QueueItem({
     <li
       ref={setNodeRef}
       style={style}
-      className="flex select-none items-center justify-between rounded-md bg-gray-50 p-3 shadow-sm space-x-2"
+      className={cn(
+        "flex select-none items-center justify-between rounded-md bg-gray-50 p-3 shadow-sm space-x-2",
+        isActive && "border-2 border-primary bg-primary/10",
+      )}
     >
       <div className="flex flex-grow items-center space-x-3">
         <div
@@ -106,22 +112,19 @@ function QueueItem({
 export function Queue(props: {
   updateQueue: (value: React.SetStateAction<Job[]>) => void;
   toggleProcessing: (isProcessing: boolean) => void;
-  handleActiveId: (activeId: number | null) => void;
   removeFromQueue: (jobId: number) => void;
   cancelJob: (jobId: number) => void;
   queue: Job[];
   isProcessing: boolean;
   samples: Sample[];
 }) {
-  const {
-    queue,
-    samples,
-    updateQueue,
-    handleActiveId,
-    cancelJob,
-    removeFromQueue,
-  } = props;
+  const { queue, samples, updateQueue, cancelJob, removeFromQueue } = props;
+  const [activeId, setActiveId] = useState<number | null>(null);
   const items = useMemo(() => queue.map((job) => job.id), [queue]);
+  const handleDragStart = ({ active }: DragStartEvent) => {
+    setActiveId(active.id as number);
+  };
+
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     if (over && active.id !== over?.id) {
       const activeIndex = queue.findIndex(({ id }) => id === active.id);
@@ -129,7 +132,7 @@ export function Queue(props: {
 
       updateQueue(arrayMove(queue, activeIndex, overIndex));
     }
-    handleActiveId(null);
+    setActiveId(null);
   };
 
   return (
@@ -140,7 +143,7 @@ export function Queue(props: {
             Queue is empty. Drag samples here to add them to the queue.
           </p>
         ) : (
-          <DndContext onDragEnd={handleDragEnd}>
+          <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             <SortableContext items={items}>
               <ul className="space-y-2">
                 {queue.map((job) => {
@@ -152,6 +155,7 @@ export function Queue(props: {
                       sample={sample}
                       onRemove={() => removeFromQueue(job.id)}
                       onCancel={() => cancelJob(job.id)}
+                      isActive={activeId === job.id}
                     />
                   );
                 })}
