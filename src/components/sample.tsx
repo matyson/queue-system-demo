@@ -27,10 +27,10 @@ export function SampleItem({
     >
       <div
         className={cn(
-          "relative flex h-12 w-12 cursor-grab items-center justify-center rounded-full font-bold text-white",
+          "relative flex h-12 w-12 cursor-grab items-center justify-center rounded-full font-bold text-white hover:ring hover:ring-primary hover:scale-110",
           sampleColors[sample.type],
           isDragging &&
-            "scale-110 cursor-grabbing rounded-sm border-2 opacity-90",
+            "cursor-grabbing rounded-sm opacity-90",
         )}
       >
         {sample.type}
