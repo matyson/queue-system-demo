@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { sampleColors } from "@/lib/constants";
 import { Dropzone } from "./dropzone";
-import { XCircle } from "lucide-react";
+import { GripVerticalIcon, XCircleIcon } from "lucide-react";
 import type { Sample } from "./sample";
+import { useMemo } from "react";
 
 export interface Job {
   id: number;
@@ -27,8 +28,14 @@ function QueueItem({
   onRemove: () => void;
   onCancel: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: job.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    setActivatorNodeRef,
+  } = useSortable({ id: job.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -38,9 +45,7 @@ function QueueItem({
     <li
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      className="flex select-none items-center justify-between rounded-md bg-gray-50 p-3 shadow-sm"
+      className="flex select-none items-center justify-between rounded-md bg-gray-50 p-3 shadow-sm space-x-2"
     >
       <div className="flex flex-grow items-center space-x-3">
         <div
@@ -76,13 +81,22 @@ function QueueItem({
           </div>
         )}
       </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        ref={setActivatorNodeRef}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVerticalIcon className="h-4 w-4" />
+      </Button>
       {(job.status === "enqueued" || job.status === "running") && (
         <Button
           variant="destructive"
           size="sm"
           onClick={job.status === "enqueued" ? onRemove : onCancel}
         >
-          <XCircle className="h-4 w-4" />
+          <XCircleIcon className="h-4 w-4" />
         </Button>
       )}
     </li>
@@ -107,6 +121,7 @@ export function Queue(props: {
     cancelJob,
     removeFromQueue,
   } = props;
+  const items = useMemo(() => queue.map((job) => job.id), [queue]);
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     if (over && active.id !== over?.id) {
       const activeIndex = queue.findIndex(({ id }) => id === active.id);
@@ -126,7 +141,7 @@ export function Queue(props: {
           </p>
         ) : (
           <DndContext onDragEnd={handleDragEnd}>
-            <SortableContext items={queue.map((job) => job.id)}>
+            <SortableContext items={items}>
               <ul className="space-y-2">
                 {queue.map((job) => {
                   const sample = samples.find((s) => s.id === job.sampleId)!;
