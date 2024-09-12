@@ -1,29 +1,39 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { SampleItem, type Sample } from "./sample";
 import { Button } from "./ui/button";
-import { UploadIcon } from "lucide-react";
+import { UploadIcon, ChevronsRightIcon } from "lucide-react";
 
 type TrayProps = {
   samples: Sample[];
   activeId: number | null;
+  addToQueue: (sampleId: number[]) => void;
 };
 
 export function Tray(props: TrayProps) {
   const [tray] = useState(props.samples);
+  const { addToQueue } = props;
+  const enqueueAll = useCallback(() => {
+    addToQueue(tray.map((sample) => sample.id));
+  }, [tray, addToQueue]);
 
   return (
     <div className="h-fit space-y-4 rounded-lg bg-gray-50 p-4 shadow-md">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-medium">Tray</h2>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => {
-            console.log("Upload");
-          }}
-        >
-          <UploadIcon className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              console.log("Upload");
+            }}
+          >
+            <UploadIcon className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="icon" onClick={enqueueAll}>
+            <ChevronsRightIcon className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       <div className="grid grid-cols-5 gap-3">
         {tray.map((sample) => (
