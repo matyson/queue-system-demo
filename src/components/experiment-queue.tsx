@@ -41,22 +41,28 @@ export function Experiment() {
   const [activeId, setActiveId] = useState<number | null>(null);
 
   const addToQueue = useCallback(
-    (sampleId: number) => {
-      const sample = samples.find((s) => s.id === sampleId);
-      if (sample) {
-        const newJob: Job = {
-          id: nextJobId,
-          sampleId,
-          status: "enqueued",
-          progress: 0,
-        };
-        setQueue((prevQueue) => [...prevQueue, newJob]);
-        setNextJobId((prevId) => prevId + 1);
-      }
-    },
-    [samples, nextJobId],
-  );
+    (sampleIds: number[]) => {
+      setQueue((prevQueue) => {
+        const newJobs = sampleIds.map((sampleId, index) => {
+          const sample = samples.find((s) => s.id === sampleId);
+          if (sample) {
+            return {
+              id: nextJobId + index,
+              sampleId,
+              status: "enqueued" as const,
+              progress: 0,
+            };
+          }
+          return null;
+        }).filter((job) => job !== null);
 
+        setNextJobId((prevId) => prevId + newJobs.length);
+
+        return [...prevQueue, ...newJobs];
+      });
+    },
+    [samples, nextJobId]
+  );
   const removeFromQueue = (jobId: number) => {
     setQueue((prevQueue) => prevQueue.filter((job) => job.id !== jobId));
   };
@@ -138,7 +144,7 @@ export function Experiment() {
     const { over } = event;
 
     if (over && over.id === "queue-dropzone") {
-      addToQueue(activeId as number);
+      addToQueue([activeId as number]);
     }
 
     setActiveId(null);
@@ -147,8 +153,8 @@ export function Experiment() {
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="mx-auto flex items-center justify-center gap-4">
         <div className="flex flex-col gap-2">
-          <Tray samples={tray1} activeId={activeId} />
-          <Tray samples={tray2} activeId={activeId} />
+          <Tray addToQueue={addToQueue} samples={tray1} activeId={activeId} />
+          <Tray addToQueue={addToQueue} samples={tray2} activeId={activeId} />
         </div>
         <div className={"flex h-screen w-2/3 flex-col space-y-4 p-4"}>
           <div className="flex flex-col gap-2">
@@ -183,7 +189,6 @@ export function Experiment() {
               samples={samples}
               updateQueue={setQueue}
               toggleProcessing={setIsProcessing}
-              handleActiveId={setActiveId}
               removeFromQueue={removeFromQueue}
               cancelJob={cancelJob}
               isProcessing={isProcessing}
