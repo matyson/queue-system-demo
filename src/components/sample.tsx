@@ -1,10 +1,9 @@
 import { useDraggable } from "@dnd-kit/core";
-import { cn } from "@/lib/utils";
-import { sampleColors } from "@/lib/constants";
+import { cn, getSampleColor } from "@/lib/utils";
 
 export type Sample = {
   id: number;
-  type: "A" | "B" | "C";
+  type: "A" | "B" | "C" | "D" | null;
 };
 
 export function SampleItem({
@@ -16,6 +15,7 @@ export function SampleItem({
 }) {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: sample.id,
+    disabled: sample.type === null,
   });
 
   return (
@@ -28,9 +28,10 @@ export function SampleItem({
       <div
         className={cn(
           "relative flex h-12 w-12 cursor-grab items-center justify-center rounded-full font-bold text-white hover:ring hover:ring-primary hover:scale-110",
-          sampleColors[sample.type],
+          getSampleColor(sample.type),
           isDragging &&
             "cursor-grabbing rounded-sm opacity-90",
+          sample.type === null && "opacity-50 cursor-not-allowed",
         )}
       >
         {sample.type}

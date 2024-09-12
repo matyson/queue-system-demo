@@ -23,7 +23,7 @@ export function Experiment() {
       .fill(null)
       .map((_, index) => ({
         id: index + 1,
-        type: ["A", "B", "C"][Math.floor(Math.random() * 3)] as "A" | "B" | "C",
+        type: ["A", "B", "C", "D", null][Math.floor(Math.random() * 5)] as Sample["type"],
       })),
   );
   const [tray2] = useState<Sample[]>(
@@ -31,7 +31,7 @@ export function Experiment() {
       .fill(null)
       .map((_, index) => ({
         id: index + 26,
-        type: ["A", "B", "C"][Math.floor(Math.random() * 3)] as "A" | "B" | "C",
+        type: ["A", "B", "C", "D", null][Math.floor(Math.random() * 5)] as Sample["type"],
       })),
   );
   const [samples] = useState<Sample[]>([...tray1, ...tray2]);

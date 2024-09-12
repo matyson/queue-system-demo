@@ -13,7 +13,7 @@ export function Tray(props: TrayProps) {
   const [tray] = useState(props.samples);
   const { addToQueue } = props;
   const enqueueAll = useCallback(() => {
-    addToQueue(tray.map((sample) => sample.id));
+    addToQueue(tray.filter((sample) => sample.type !== null).map((sample) => sample.id));
   }, [tray, addToQueue]);
 
   return (

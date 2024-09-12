@@ -4,12 +4,11 @@ import { SortableContext, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { sampleColors } from "@/lib/constants";
 import { Dropzone } from "./dropzone";
 import { GripVerticalIcon, XCircleIcon } from "lucide-react";
-import type { Sample } from "./sample";
+import { Sample } from "./sample";
 import { useMemo } from "react";
-import { cn } from "@/lib/utils";
+import { cn, getSampleColor } from "@/lib/utils";
 
 export interface Job {
   id: number;
@@ -55,7 +54,7 @@ function QueueItem({
       <div className="flex flex-grow items-center space-x-3">
         <div
           className={`h-8 w-8 rounded-full ${
-            sampleColors[sample.type]
+            getSampleColor(sample.type)
           } relative flex items-center justify-center font-bold text-white`}
         >
           {sample.type}
