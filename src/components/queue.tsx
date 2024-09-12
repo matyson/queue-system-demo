@@ -1,4 +1,4 @@
-import { DndContext, DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { SortableContext, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -8,7 +8,7 @@ import { sampleColors } from "@/lib/constants";
 import { Dropzone } from "./dropzone";
 import { GripVerticalIcon, XCircleIcon } from "lucide-react";
 import type { Sample } from "./sample";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 export interface Job {
@@ -21,13 +21,11 @@ export interface Job {
 function QueueItem({
   job,
   sample,
-  isActive,
   onRemove,
   onCancel,
 }: {
   job: Job;
   sample: Sample;
-  isActive: boolean;
   onRemove: () => void;
   onCancel: () => void;
 }) {
@@ -38,7 +36,8 @@ function QueueItem({
     transform,
     transition,
     setActivatorNodeRef,
-  } = useSortable({ id: job.id });
+    isDragging,
+  } = useSortable({ id: job.id, disabled: job.status === "running" });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -50,7 +49,7 @@ function QueueItem({
       style={style}
       className={cn(
         "flex select-none items-center justify-between rounded-md bg-gray-50 p-3 shadow-sm space-x-2",
-        isActive && "border-2 border-primary bg-primary/10",
+        isDragging && "border-2 border-primary bg-primary/10",
       )}
     >
       <div className="flex flex-grow items-center space-x-3">
@@ -81,13 +80,14 @@ function QueueItem({
         {job.status === "running" && (
           <div className="h-2.5 w-24 rounded-full bg-gray-200 dark:bg-gray-700">
             <div
-              className="h-2.5 rounded-full bg-blue-600"
+              className="h-2.5 rounded-full bg-primary"
               style={{ width: `${job.progress}%` }}
             ></div>
           </div>
         )}
       </div>
       <Button
+        className={cn("cursor-grab", isDragging && "cursor-grabbing")}
         variant="ghost"
         size="icon"
         ref={setActivatorNodeRef}
@@ -119,11 +119,7 @@ export function Queue(props: {
   samples: Sample[];
 }) {
   const { queue, samples, updateQueue, cancelJob, removeFromQueue } = props;
-  const [activeId, setActiveId] = useState<number | null>(null);
   const items = useMemo(() => queue.map((job) => job.id), [queue]);
-  const handleDragStart = ({ active }: DragStartEvent) => {
-    setActiveId(active.id as number);
-  };
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     if (over && active.id !== over?.id) {
@@ -132,7 +128,6 @@ export function Queue(props: {
 
       updateQueue(arrayMove(queue, activeIndex, overIndex));
     }
-    setActiveId(null);
   };
 
   return (
@@ -143,7 +138,7 @@ export function Queue(props: {
             Queue is empty. Drag samples here to add them to the queue.
           </p>
         ) : (
-          <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <DndContext onDragEnd={handleDragEnd}>
             <SortableContext items={items}>
               <ul className="space-y-2">
                 {queue.map((job) => {
@@ -155,7 +150,6 @@ export function Queue(props: {
                       sample={sample}
                       onRemove={() => removeFromQueue(job.id)}
                       onCancel={() => cancelJob(job.id)}
-                      isActive={activeId === job.id}
                     />
                   );
                 })}
